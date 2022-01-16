@@ -25,7 +25,7 @@ def make_prediction(image):
      pred_class (prediction class from class_names)
      pred_conf (model confidence)
     """
-    model = tf.keras.models.load_model("model\enetd0")
+    model = tf.keras.models.load_model("")
     image_array = prepare(image,expand_dims=True)
     image_pred = prediction(model,image_array)
     return str(image_pred)
