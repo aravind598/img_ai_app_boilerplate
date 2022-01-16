@@ -1,3 +1,25 @@
+import tensorflow as tf
+
+def prepare(bytestr, img_shape=224, rescale=False, expand_dims=False):
+    img = tf.io.decode_image(bytestr, channels=3, dtype=tf.dtypes.float32)
+    img = tf.image.resize(img, [img_shape, img_shape])
+    if rescale:
+        img = img/255.
+        img = img.numpy()
+    else:
+        pass
+    if expand_dims:
+        return tf.cast(tf.expand_dims(img, axis=0), tf.dtypes.float32)
+    else:
+        return img.numpy()
+
+def prediction(model, pred):
+    prednumpyarray = model.predict(pred)
+    print(prednumpyarray.shape)
+    predarray = tf.keras.applications.efficientnet.decode_predictions(prednumpyarray, top=5)
+    return predarray
+
+"""
 def our_image_classifier(image):
     '''
             Function that takes the path of the image as input and returns the closest predicted label as output
@@ -25,4 +47,4 @@ def our_image_classifier(image):
     predictions = model.predict(data).tolist()
     best_outcome = predictions[0].index(max(predictions[0]))
     print(labels[best_outcome])
-    return labels[best_outcome]
+    return labels[best_outcome]"""

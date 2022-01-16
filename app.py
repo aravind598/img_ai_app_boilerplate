@@ -1,14 +1,34 @@
 import streamlit as st
-import tensorflow.keras
-from PIL import Image, ImageOps
 import numpy as np
 import time
-from img_classifier import our_image_classifier
+import tensorflow as tf
+from PIL import Image
+from img_classifier import prediction, prepare
+import traceback
+#from img_classifier import our_image_classifier
 # import firebase_bro
 
 # Just making sure we are not bothered by File Encoding warnings
 st.set_option('deprecation.showfileUploaderEncoding', False)
 
+global models
+#model = tf.keras.models.load_model()
+
+@st.cache # cache the function so predictions aren't always redone (Streamlit refreshes every click)
+def make_prediction(image):
+    """
+    Takes an image and uses model (a trained TensorFlow model) to make a
+    prediction.
+
+    Returns:
+     image (preproccessed)
+     pred_class (prediction class from class_names)
+     pred_conf (model confidence)
+    """
+    model = tf.keras.models.load_model("model\enetd0")
+    image_array = prepare(image,expand_dims=True)
+    image_pred = prediction(model,image_array)
+    return str(image_pred)
 
 def main():
     # Metadata for the web app
@@ -17,6 +37,12 @@ def main():
     layout = "centered",
     page_icon= ":shark:",
     initial_sidebar_state = "collapsed",
+    )
+    choose_model = st.sidebar.selectbox(
+    "Pick model you'd like to use",
+    ("Model 1", # original 10 classes
+     "Model 2 (11 food classes)", # original 10 classes + donuts
+     "Model 3 (11 food classes + non-food class)") # 11 classes (same as above) + not_food class
     )
     menu = ['Home', 'About', 'Contact', 'Feedback']
     choice = st.sidebar.selectbox("Menu", menu)
@@ -28,24 +54,30 @@ def main():
         st.subheader("By Your Cool Dev Name")
         # Option to upload an image file with jpg,jpeg or png extensions
         uploaded_file = st.file_uploader("Choose an image...", type=["jpg","png","jpeg"])
+        
         # When the user clicks the predict button
         if st.button("Predict"):
         # If the user uploads an image
             if uploaded_file is not None:
                 # Opening our image
-                image = Image.open(uploaded_file)
+                image = uploaded_file.read()
+                print(type(image))
+                #image = Image.open(uploaded_file)
                 # # Send our image to database for later analysis
                 # firebase_bro.send_img(image)
                 # Let's see what we got
                 st.image(image,use_column_width=True)
                 st.write("")
                 try:
-                    with st.spinner("The magic of our AI has started...."):
-                        label = our_image_classifier(image)
-                        time.sleep(8)
+                    #with st.spinner("The magic of our AI has started...."):
+                        #label = our_image_classifier(image)
+                    label=make_prediction(image)
+                        #time.sleep(8)
                     st.success("We predict this image to be: "+label)
-                    rating = st.slider("Do you mind rating our service?",1,10)
-                except:
+                    #rating = st.slider("Do you mind rating our service?",1,10)
+                except Exception as e:
+                    st.error(e)
+                    st.error(traceback.format_exc())
                     st.error("We apologize something went wrong 🙇🏽‍♂️")
             else:
                 st.error("Can you please upload an image 🙇🏽‍♂️")
