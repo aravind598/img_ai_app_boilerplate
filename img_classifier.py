@@ -5,7 +5,7 @@ import io
 
 def prepare(bytestr, img_shape=224, rescale=False, expand_dims=False):
     img = tf.io.decode_image(bytestr, channels=3, dtype=tf.dtypes.float32)
-    img = tf.image.resize(img, [img_shape, img_shape])
+    #img = tf.image.resize(img, [img_shape, img_shape])
     if rescale:
         img = img/255.
         img = img.numpy()
@@ -22,8 +22,6 @@ def prediction(model, pred):
     predarray = tf.keras.applications.efficientnet.decode_predictions(prednumpyarray, top=5)
     return predarray
 
-
-from tensorflow.keras.models import load_model
 
 def prepare_my(bytestr, img_shape=224):
     # Create the array of the right shape to feed into the keras model
