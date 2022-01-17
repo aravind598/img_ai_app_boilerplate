@@ -1,9 +1,10 @@
+from functools import cache
 import streamlit as st
 import numpy as np
 import time
 import tensorflow as tf
 from PIL import Image
-from img_classifier import prediction, prepare
+from img_classifier import prediction, prepare, prepare_my, prediction_my
 import traceback
 #from img_classifier import our_image_classifier
 # import firebase_bro
@@ -11,11 +12,25 @@ import traceback
 # Just making sure we are not bothered by File Encoding warnings
 st.set_option('deprecation.showfileUploaderEncoding', False)
 
-global models
-#model = tf.keras.models.load_model()
+global model
+global my_model
+
+@st.experimental_singleton 
+def call_model():
+    model = tf.keras.models.load_model("enetd0")
+    return model
+
+
+
+
+def call_my_model():
+    my_model = tf.keras.models.load_model("mymodel")
+    return my_model
+
+
 
 @st.cache # cache the function so predictions aren't always redone (Streamlit refreshes every click)
-def make_prediction(image):
+def make_prediction(model, image):
     """
     Takes an image and uses model (a trained TensorFlow model) to make a
     prediction.
@@ -25,10 +40,24 @@ def make_prediction(image):
      pred_class (prediction class from class_names)
      pred_conf (model confidence)
     """
-    model = tf.keras.models.load_model("enetd0")
-    my_model = tf.keras.models.load_model("")
     image_array = prepare(image,expand_dims=True)
     image_pred = prediction(model,image_array)
+    return str(image_pred)
+
+#@st.cache
+def make_my_prediction(my_model,image):
+    """
+    Takes an image and uses model (a trained TensorFlow model) to make a
+    prediction.
+
+    Returns:
+     image (preproccessed)
+     pred_class (prediction class from class_names)
+     pred_conf (model confidence)
+    """
+    #my_model = tf.keras.models.load_model("mymodel")
+    image_array = prepare_my(image)
+    image_pred = prediction_my(my_model,image_array)
     return str(image_pred)
 
 def main():
@@ -39,14 +68,20 @@ def main():
     page_icon= ":shark:",
     initial_sidebar_state = "collapsed",
     )
+    
+    
+    
     choose_model = st.sidebar.selectbox(
     "Pick model you'd like to use",
-    ("Model 1", # original 10 classes
+    ("Model 1 (Custom Model)", # original 10 classes
      "Model 2 (11 food classes)", # original 10 classes + donuts
      "Model 3 (11 food classes + non-food class)") # 11 classes (same as above) + not_food class
-    )
+)
+    
     menu = ['Home', 'About', 'Contact', 'Feedback']
     choice = st.sidebar.selectbox("Menu", menu)
+    
+
 
     if choice == "Home":
         # Let's set the title of our awesome web app
@@ -55,6 +90,7 @@ def main():
         st.subheader("By Your Cool Dev Name")
         # Option to upload an image file with jpg,jpeg or png extensions
         uploaded_file = st.file_uploader("Choose an image...", type=["jpg","png","jpeg"])
+        
         
         # When the user clicks the predict button
         if st.button("Predict"):
@@ -72,9 +108,16 @@ def main():
                 try:
                     #with st.spinner("The magic of our AI has started...."):
                         #label = our_image_classifier(image)
-                    label=make_prediction(image)
+                    if choose_model != "Model 1 (Custom Model)":
+                        model = call_model()
+                        label=make_prediction(model,image)
+                        st.success("We predict this image to be: "+label)
+                    else:
+                        my_model = call_my_model()
+                        labels=make_my_prediction(my_model,image)
+                        st.success("We predict this image to be: "+ labels)
                         #time.sleep(8)
-                    st.success("We predict this image to be: "+label)
+                    
                     #rating = st.slider("Do you mind rating our service?",1,10)
                 except Exception as e:
                     st.error(e)
