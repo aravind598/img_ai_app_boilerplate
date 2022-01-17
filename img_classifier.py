@@ -2,7 +2,7 @@ import tensorflow as tf
 
 def prepare(bytestr, img_shape=224, rescale=False, expand_dims=False):
     img = tf.io.decode_image(bytestr, channels=3, dtype=tf.dtypes.float32)
-    img = tf.image.resize(img, [img_shape, img_shape])
+    #img = tf.image.resize(img, [img_shape, img_shape])
     if rescale:
         img = img/255.
         img = img.numpy()

@@ -14,7 +14,7 @@ st.set_option('deprecation.showfileUploaderEncoding', False)
 global models
 #model = tf.keras.models.load_model()
 
-@st.cache # cache the function so predictions aren't always redone (Streamlit refreshes every click)
+@st.experimental_singleton # cache the function so predictions aren't always redone (Streamlit refreshes every click)
 def make_prediction(image):
     """
     Takes an image and uses model (a trained TensorFlow model) to make a
@@ -26,7 +26,6 @@ def make_prediction(image):
      pred_conf (model confidence)
     """
     model = tf.keras.models.load_model("enetd0")
-    my_model = tf.keras.models.load_model("")
     image_array = prepare(image,expand_dims=True)
     image_pred = prediction(model,image_array)
     return str(image_pred)
